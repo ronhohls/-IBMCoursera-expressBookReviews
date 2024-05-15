@@ -5,6 +5,7 @@ const regd_users = express.Router();
 
 let users = [];
 
+//boolean function to check if username is valid, i.e. username does not exist
 const isValid = (username)=>{ 
   let usersWithSameUsername = users.filter((user) => {
     return user.username === username;
@@ -16,6 +17,7 @@ const isValid = (username)=>{
   }
 }
 
+//boolean function to test if user is authenticated
 const authenticatedUser = (username,password)=>{ 
   let validUsers = users.filter((user) =>{
     return (user.username === username && user.password === password)
@@ -27,10 +29,12 @@ const authenticatedUser = (username,password)=>{
   }
 }
 
+//TASK 7:
+
 //only registered users can login
 regd_users.post("/login", (req,res) => {
-  let username = req.body.username;
-  let password = req.body.password;
+  const username = req.body.username;
+  const password = req.body.password;
 
   if (!username || !password){
     return res.status(404).json({message: "Error logging in"});
@@ -51,10 +55,37 @@ regd_users.post("/login", (req,res) => {
 
 });
 
+//TASK 8:
+
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  const isbn = req.params.isbn;
+  let reviewer = req.session.authorization['username'];
+  let review = req.query.review;
+  let filtered_review = books[isbn]["reviews"];
+
+  if (books[isbn] && review){
+    books[isbn]["reviews"][reviewer] = review;
+    return res.status(200).json({message: "Review posted to " + JSON.stringify(books[isbn])});
+    
+  } else{
+    return res.status(404).json({message: "No review submitted or book not found"});
+  }
+  
+});
+
+//TASK 9:
+
+regd_users.delete("/auth/review/:isbn", (req, res) =>{
+  const isbn = req.params.isbn;
+  let reviewer = req.session.authorization['username'];
+  let filtered_review = books[isbn]["reviews"];
+  if (filtered_review[reviewer]){
+    delete filtered_review[reviewer]
+    res.send(`Reviews for the ISBN ${isbn} posted by the user ${reviewer} has been deleted`);
+  }else{
+    res.send("Cannot delete, as this review has been posted by a different user");
+  }
 });
 
 module.exports.authenticated = regd_users;
